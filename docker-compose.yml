@@ -1,0 +1,56 @@
+version: '3'
+services:
+  postgres_db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - telegram_network
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres_db
+
+  telethon_service:
+    build: ./telethon_service
+    volumes:
+      - ./telethon_service:/app
+    depends_on:
+      - postgres_db
+    networks:
+      - telegram_network
+    environment:
+      TELEGRAM_API_ID: "your_api"
+      TELEGRAM_API_HASH: "your_hash"
+      TELEGRAM_PHONE: "+your_number"
+      DATABASE_URL: postgresql://myuser:mypassword@postgres_db:5432/mydatabase
+
+  telegram_bot_service:
+    build: ./telegram_bot_service
+    volumes:
+      - ./telegram_bot_service:/app
+    depends_on:
+      - postgres_db
+    networks:
+      - telegram_network
+    environment:
+      TELEGRAM_BOT_TOKEN: 'your_bot_token'
+      DATABASE_URL: postgresql://myuser:mypassword@postgres_db:5432/mydatabase
+
+networks:
+  telegram_network:
+
+volumes:
+  postgres_data:
